@@ -1,0 +1,39 @@
+farmer_routine {
+    while (1)
+    {
+        sleep(farmer_interval);
+
+        phtead_lock_mutex(melon_mutex)
+
+        while (box is full) {
+            printf(box full statement);
+            pthread_cond_wait(melon_cond, melon_mutex)`;
+        } 
+        
+            // adds melon to box
+            melon_box++;
+            printf(add melon to box statement);
+
+        pthread_unlock_mutex(melon_mutex);
+    }
+}
+
+consuner_routine {
+
+    printf(starting statement);
+
+    pthread_mutex_lock(melon_mutex);
+
+    if (melon box is empty) {
+
+        printf("no melons");
+        pthread_mutex_unlock(melon_mutex);
+        pthread_exit();
+    }
+
+    printf("take statement");
+    melon--;
+    pthread_cond_signal(cond_variable);
+    pthread_mutex_unlock(melon_mutex);
+    pthread_exit();
+}

@@ -1,0 +1,6 @@
+assistant gives out ticket from 1 to N to new customers (cyclic)
+customers wait until they are called by assisntant in the order they arrived
+interaction between barber and assistant
+
+track N tickets - N condition variables (?) in an array
+

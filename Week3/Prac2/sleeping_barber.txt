@@ -1,0 +1,68 @@
+cond_var(1) - barber sleeping when there are no customers
+cond_var(2) - customer waiting on the waiting room
+cond_var(3) - barber waiting for the customer to walk to the barber chair
+cond_var(4) - customer waiting on barber completing haircut
+
+
+
+
+barber routine
+while 1
+    locking mutex - access seats
+    while no customers
+        barber goes to sleep
+        wait on cond var(1)
+    
+    print free seats, call next customer
+
+    signal cond var to indicate next customer
+
+    increment number of free seats in the waiting room
+
+    unlock mutex - access seats
+
+    locking mutex - access barber
+
+    print waiting for the customer to sit on the barber chair
+
+    wait on cond var - customer to sit down barber chair cond_var (the action of 
+    customer sitting down)
+
+    start serving the customer
+    sleep() - haircut
+    finish cutting
+    signal haircut done - customer is free to leave
+
+    unlock mutex - access barber
+
+
+customer routine
+
+customer enters a shop
+if there's no empty seat - customer complains and leave
+
+lock access seat mutex
+check number of seats
+    print no empty seat
+    unlock mutex
+    leaves
+
+else
+    print message
+    sitdown
+    decrement number of free seats
+    sits down - signal barber wake up (barber wake up cond var)
+
+    wait on cond var - signal customer to access chair
+    print customer being served
+    unlock mutex
+
+lock barber chair
+customer prints sit on barber chair
+dec barber chair
+signal customer ready - sit down cond war
+
+customer prints being served
+wait on signal
+prints well done
+unlock barber chair 
