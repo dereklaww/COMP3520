@@ -16,6 +16,7 @@ int customer_signaled = 0;
 int work_done = 0;
 int barber_working = 0;
 int barber_busy = 0;
+int no_leaving = 0;
 
 void * barber_routine(void *);
 void * customer_routine(void *);
@@ -230,25 +231,40 @@ int main(int argc, char ** argv)
 
 void *assistant_routine(void *arg) {
 
-    while (completed_haircuts < no_of_customers) {
+    while (1) {
+        printf("no leaving: %d\n", no_leaving);
 
         pthread_mutex_lock(&access_waitingroom);
 
-        while (no_waiting == 0) {
+        while ((no_waiting == 0) && (calling_index < no_of_customers - 1)) {
+            printf("%d\n", calling_index);
             printf("Assistant: I'm waiting for customers.\n");
             pthread_cond_wait(&customer_arrived, &access_waitingroom);
         }
+        
 
+        pthread_mutex_lock(&access_barberroom);
         while (barber_busy) {
             printf("Assistant: I'm waiting for barber to become available.\n");
             pthread_cond_wait(&barber_ready_cond, &access_barberroom);
         }
+
+
+        if (!barber_busy && no_leaving == -1) {
+            printf("Assistant: Hi Barber, we've finished the work for the day.\n");
+            calling_index = -1; //indicate no customers for the day
+            pthread_exit(EXIT_SUCCESS);
+        }
+
+
+        customer_signaled = 1;
+        pthread_cond_signal(&customer_signalcond);
+        pthread_mutex_unlock(&access_barberroom);
+
+
         printf("Assistant: Call one customer with a ticket numbered %d\n", calling_index + 1);
         no_waiting--;
         pthread_cond_signal(&waiting_tickets[calling_index]);
-        pthread_cond_signal(&customer_signalcond);
-        customer_signaled = 1;
-        calling_index++;
         pthread_mutex_unlock(&access_waitingroom);
     
     }
@@ -261,7 +277,7 @@ void *barber_routine(void *arg) {
     int barber_min = barber->barber_min;
     int barber_max = barber->barber_max;
     
-    while (!work_done) {
+    while (1) {
 
         srand(time(0));
         int barber_pace = ((int)rand() % (barber_max - barber_min + 1)) + barber_min;
@@ -273,23 +289,28 @@ void *barber_routine(void *arg) {
         barber_busy = 0;
         pthread_cond_signal(&barber_ready_cond);
 
+        if (calling_index == -1) {
+            printf("Barber: Thank Assistant and see you tomorrow!\n");
+            pthread_exit(EXIT_SUCCESS);
+        }
+
         while (!customer_signaled) {
             pthread_cond_wait(&customer_signalcond, &access_barberroom);
         }
         barber_busy = 1;
-        printf("Barber: wait for the customer to sit on the barber chair. \n");
         pthread_mutex_unlock(&access_barberroom);
-
         pthread_mutex_lock(&access_barber);
+        barber_working = 1;
 
         while (barber_chair) {
+            printf("Barber: wait for the customer to sit on the barber chair. \n");
             pthread_cond_wait(&customer_ready, &access_barber);
         }
 
-        printf("Barber: Start serving the customer.. \n");
-        barber_working = 1;
+        printf("Barber: Hello customer %d!\n", calling_index + 1);
         sleep(5);
-        printf("Barber: finished cutting. Bye! \n");
+        printf("Barber: finished cutting. Good bye, customer %d! \n", calling_index + 1);
+        calling_index++;
         barber_working = 0;
         pthread_cond_signal(&barber_done);
         barber_chair++;
@@ -313,6 +334,7 @@ void *customer_routine(void * arg){
     pthread_mutex_lock(&access_waitingroom);
     if (no_waiting == seat_capacity) {
         printf("Customer [%d]: oh no! all seats have been taken and I'll leave now!\n", *customer_id);
+        no_leaving++;
         pthread_mutex_unlock(&access_waitingroom);
         pthread_exit(EXIT_SUCCESS);
         
@@ -336,7 +358,7 @@ void *customer_routine(void * arg){
 
     pthread_mutex_lock(&access_barber);
     printf("Customer [%d]: sit on the barber chair\n", *customer_id);
-    barber_chair--;
+    barber_chair = 0;
     pthread_cond_signal(&customer_ready);
 
     while (barber_working) {
@@ -344,10 +366,12 @@ void *customer_routine(void * arg){
         pthread_cond_wait(&barber_done, &access_barber);
     }
 
+    no_leaving++;
     printf("Customer [%d]: Well done. Thank barber, bye!\n", *customer_id);
 
-    completed_haircuts++;
-    printf("%d\n", completed_haircuts);
+    if (no_leaving == no_of_customers) {
+        no_leaving = -1;
+    }
     pthread_mutex_unlock(&access_barber);
 
     pthread_exit(EXIT_SUCCESS);
