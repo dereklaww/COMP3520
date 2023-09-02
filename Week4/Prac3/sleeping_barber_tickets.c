@@ -17,6 +17,7 @@ int work_done = 0;
 int barber_working = 0;
 int barber_busy = 0;
 int no_leaving = 0;
+int shop_closed = 0;
 
 void * barber_routine(void *);
 void * customer_routine(void *);
@@ -34,7 +35,7 @@ struct barber_struct {
 //declare global mutex and condition variables
 pthread_mutex_t access_waitingroom, access_barberroom, access_barber;
 
-pthread_cond_t customer_arrived, barber_wakeup, barber_ready_cond, customer_ready, barber_done, customer_signalcond;
+pthread_cond_t customer_arrived, barber_wakeup, barber_ready_cond, customer_ready, barber_done, customer_signalcond, shop_closed_cond;
 pthread_cond_t *waiting_tickets;
 
 
@@ -137,6 +138,13 @@ int main(int argc, char ** argv)
     }
 
     rc = pthread_cond_init(&barber_done, NULL);
+
+    if (rc) {
+        printf("ERROR; return code from pthread_cond_init() (customer) is %d\n", rc);
+        exit(-1);
+    }
+
+    rc = pthread_cond_init(&shop_closed_cond, NULL);
 
     if (rc) {
         printf("ERROR; return code from pthread_cond_init() (customer) is %d\n", rc);
@@ -251,9 +259,10 @@ void *assistant_routine(void *arg) {
         }
 
 
-        if (!barber_busy && no_leaving == -1) {
+        if (!barber_busy && (calling_index == no_of_customers)) {
             printf("Assistant: Hi Barber, we've finished the work for the day.\n");
-            calling_index = -1; //indicate no customers for the day
+            shop_closed = 1;
+            pthread_cond_signal(&shop_closed_cond);
             pthread_exit(EXIT_SUCCESS);
         }
 
@@ -286,14 +295,16 @@ void *barber_routine(void *arg) {
         
         // access barber
         pthread_mutex_lock(&access_barberroom);
-        printf("Barber: I'm now ready to accept a new customer. \n");
         barber_busy = 0;
-        pthread_cond_signal(&barber_ready_cond);
 
-        if (calling_index == -1) {
+        while (!shop_closed && calling_index == no_of_customers){
+            pthread_cond_wait(&shop_closed_cond, &access_barberroom);
             printf("Barber: Thank Assistant and see you tomorrow!\n");
             pthread_exit(EXIT_SUCCESS);
         }
+
+        printf("Barber: I'm now ready to accept a new customer. \n");
+        pthread_cond_signal(&barber_ready_cond);
 
         while (!customer_signaled) {
             pthread_cond_wait(&customer_signalcond, &access_barberroom);
@@ -317,7 +328,6 @@ void *barber_routine(void *arg) {
         barber_chair = 1;
         pthread_mutex_unlock(&access_barber);
     }
-    pthread_exit(EXIT_SUCCESS);
 }
 
 void *customer_routine(void * arg){
