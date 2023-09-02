@@ -241,6 +241,7 @@ void *assistant_routine(void *arg) {
             printf("Assistant: I'm waiting for customers.\n");
             pthread_cond_wait(&customer_arrived, &access_waitingroom);
         }
+        pthread_mutex_unlock(&access_waitingroom);
         
 
         pthread_mutex_lock(&access_barberroom);
@@ -260,7 +261,7 @@ void *assistant_routine(void *arg) {
         customer_signaled = 1;
         pthread_cond_signal(&customer_signalcond);
         pthread_mutex_unlock(&access_barberroom);
-
+        pthread_mutex_lock(&access_waitingroom);
 
         printf("Assistant: Call one customer with a ticket numbered %d\n", calling_index + 1);
         no_waiting--;
@@ -313,7 +314,7 @@ void *barber_routine(void *arg) {
         calling_index++;
         barber_working = 0;
         pthread_cond_signal(&barber_done);
-        barber_chair++;
+        barber_chair = 1;
         pthread_mutex_unlock(&access_barber);
     }
     pthread_exit(EXIT_SUCCESS);
@@ -379,4 +380,3 @@ void *customer_routine(void * arg){
 }
 
 //gcc -Wall -pedantic -std=gnu99 sleeping_barber_tickets.c -o sleeping_barber_tickets -lpthread          
-

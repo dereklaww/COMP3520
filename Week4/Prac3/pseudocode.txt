@@ -4,3 +4,6 @@ interaction between barber and assistant
 
 track N tickets - N condition variables (?) in an array
 
+no communication between barber and customer except:
+    customer arrives at chair
+    customer leaves chair
