@@ -1,38 +1,42 @@
 #include <stdio.h>
-#include <queue.h>
+#include "queue.h"
 
 Queue * inst_queue(int capacity) {
-    Queue * queue = (Queue *) malloc(sizeof(Queue));
+    Queue * queue = malloc(sizeof(Queue));
     queue->capacity = capacity;
-    queue->front = queue->size = 0;
+    queue->front = queue->occupied = 0;
     queue->rear = capacity - 1;
-    queue->array = (int *) malloc(queue->capacity * sizeof(int));
+    queue->array = (int *) calloc(sizeof(int), queue->capacity);
     return queue;
 }
 
 int is_empty(Queue *queue) {
-    return (queue->size == 0);
+    return (queue->occupied == 0);
 }
 
 int is_full(Queue *queue) {
-    return (queue->size == queue->capacity);
+    return (queue->occupied == queue->capacity);
 }
 
-void push(Queue *queue, int item) {
+int push(Queue *queue, int item) {
     if (is_full(queue)) {
         return -1;
     }
     queue->rear = (queue->rear + 1) % queue->capacity;
     queue->array[queue->rear] = item;
-    queue->size = queue->size + 1;
+    queue->occupied = queue->occupied + 1;
+
+    return 0;
 }
 
-void pop(Queue *queue) {
+int pop(Queue *queue) {
     if (is_empty(queue)) {
         return -1;
     }
     queue->front = (queue->front + 1) % queue->capacity;
-    queue->size = queue->size - 1;
+    queue->occupied = queue->occupied - 1;
+
+    return 0;
 }
 
 int front(Queue *queue) {
@@ -41,3 +45,15 @@ int front(Queue *queue) {
     }
     return queue->array[queue->front];
 }
+
+int rear(Queue *queue) {
+    if (is_empty(queue)) {
+        return -1;
+    }
+    return queue->array[queue->rear];
+}
+
+int get_size(Queue *queue) {
+    return queue->occupied;
+}
+

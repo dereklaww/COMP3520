@@ -1,13 +1,14 @@
 
 CC=gcc
 CFLAGS=-Wall -Werror -Wvla -O0 --pedantic -std=gnu99 -g -fsanitize=address
+EXC=main.c queue.c shop.c
 
 
 all:
-	$(CC) $(CFLAGS) ass1.c -o ass1 -lpthread
+	$(CC) $(CFLAGS) $(EXC) -o main -lpthread
 
 test:
-	gdb ./ass1
+	gdb ./main
 
 run:
-	./ass1
+	./main

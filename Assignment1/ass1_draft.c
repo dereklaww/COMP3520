@@ -70,11 +70,11 @@ int main(int argc, char ** argv)
 
     struct barber_arg_struct barber_args;
 
-    // ask for seeating capacity.
+    // ask for number of barbers.
     printf("Enter total number of barbers (int): ");
     scanf("%d", &no_of_barbers);
 
-    // ask for seeating capacity.
+    // ask for seating capacity.
     printf("Enter total number of seats (int): ");
     scanf("%d", &seat_capacity);
 
