@@ -1,3 +1,13 @@
+
+CC=gcc
+CFLAGS=-Wall -Werror -Wvla -O0 --pedantic -std=gnu99 -g -fsanitize=address
+
+
 all:
-	gcc -Wall -pedantic -std=gnu99 sleeping_barber_tickets.c -o sleeping_barber_tickets -lpthread
-	./sleeping_barber_tickets
+	$(CC) $(CFLAGS) ass1.c -o ass1 -lpthread
+
+test:
+	gdb ./ass1
+
+run:
+	./ass1
