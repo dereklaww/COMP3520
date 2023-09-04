@@ -1,3 +1,6 @@
+#ifndef SHOP
+#define SHOP
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -27,3 +30,6 @@ int arrive_shop(int customer_id);
 void leave_shop(int customer_id, int barber_id);
 void *barber_service(void *barber_id);
 void *barber_done(void *barber_id);
+Barber *get_barber(int barber_id);
+
+#endif
