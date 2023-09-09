@@ -37,6 +37,9 @@ void *barber_routine( void *arg ) {
     srand(time(0));
     int barber_pace = ((int)rand() % (barber_max - barber_min + 1)) + barber_min;
 
+    // barber initial being
+    barber_initial_begin(barber_id);
+
   // keep working until being terminated by the main
   while (1) {
     barber_service(barber_id);  // pick up a new customer

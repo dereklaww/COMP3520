@@ -44,6 +44,7 @@ enum CustomerState {
 Shop init_shop(int no_barbers, int no_customers, int seating_capacity);   
 int arrive_shop(int customer_id);
 void leave_shop(int customer_id, int barber_id);
+void barber_initial_begin(int barber_id);
 void barber_service(int barber_id);
 void barber_done(int barber_id);
 void assistant_waiting_customer(void);

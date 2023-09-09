@@ -63,7 +63,6 @@ void assistant_waiting_barber(void) {
     pthread_mutex_lock(&barber_room_mutex);
 
         printf("Assistant: I'm waiting for barbers to become available.\n");
-        printf("assistant no leaving: %d\n", assistant.no_leaving);
         while (is_empty(barber_queue)) {
             pthread_cond_wait(&assistant.barber_cond, &barber_room_mutex);
         }
@@ -118,7 +117,6 @@ int arrive_shop(int customer_id) {
         assistant.no_leaving++;
 
         if (assistant.no_leaving == shop.no_customers) {
-            printf("here\n");
             assistant.no_leaving = -1;
             pthread_cond_signal(&assistant.customer_cond);
         }
@@ -170,7 +168,7 @@ void leave_shop(int customer_id, int barber_id) {
     customers[customer_id].current_state = LEAVING;
     printf("Customer [%d]: Well done. Thank Barber %d, bye!\n", customer_id, barber_id);
     assistant.no_leaving++;
-    printf("customer: no leaving: %d\n", assistant.no_leaving);
+
     if (assistant.no_leaving == shop.no_customers) {
         assistant.no_leaving = -1;
         pthread_cond_signal(&assistant.customer_cond);
@@ -179,13 +177,17 @@ void leave_shop(int customer_id, int barber_id) {
     pthread_mutex_unlock(&barber_mutex);
 }
 
+void barber_initial_begin(int barber_id) {
+    pthread_mutex_lock(&barber_room_mutex);
+    push(barber_queue, barber_id);
+    pthread_cond_signal(&assistant.barber_cond);
+    pthread_mutex_unlock(&barber_room_mutex);
+}
+
 void barber_service(int barber_id) {
     pthread_mutex_lock(&barber_room_mutex);
 
     if (get_barber(barber_id)->customer_id == -1) {
-        push(barber_queue, barber_id);
-        pthread_cond_signal(&assistant.barber_cond);
-        printf("Barber[%d]: I'm now ready to accept a new customer. \n", barber_id);
         while (get_barber(barber_id)->customer_id == -1) {
             pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_room_mutex);
         }
@@ -222,6 +224,9 @@ void barber_done(int barber_id) {
     // }
 
     get_barber(barber_id)->customer_id = -1;
+    push(barber_queue, barber_id);
+    pthread_cond_signal(&assistant.barber_cond);
+    printf("Barber[%d]: I'm now ready to accept a new customer. \n", barber_id);
     pthread_mutex_unlock(&barber_mutex);
 }
 
