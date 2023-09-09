@@ -24,14 +24,12 @@ typedef struct Shop {
     int no_barbers;
     int seat_capacity;
     int no_customers;
-    int customer_min;
-    int customer_max;
-    int barber_min;
-    int barber_max;
 } Shop;
 
 typedef struct Assistant {
     int ticket_id;
+    int no_leaving;
+    int shop_close;
     pthread_cond_t customer_cond;
     pthread_cond_t barber_cond;
 
@@ -43,8 +41,7 @@ enum CustomerState {
     LEAVING,
 };
 
-Shop *init_shop(int no_barbers, int no_customers, int seating_capacity, 
-    int customer_min, int customer_max, int barber_min, int barber_max);   
+Shop init_shop(int no_barbers, int no_customers, int seating_capacity);   
 int arrive_shop(int customer_id);
 void leave_shop(int customer_id, int barber_id);
 void barber_service(int barber_id);

@@ -8,7 +8,7 @@ int customer_max;
 int barber_min;
 int barber_max;
 
-Shop *shop;
+Shop shop;
 barber_argv *barber_argv_arr;
 
 pthread_t *barber_threads;
@@ -105,10 +105,8 @@ int main(int argc, char **argv) {
     customer_threads = malloc(sizeof(pthread_t) * no_customers);
     t_ids = malloc(sizeof(int) * no_customers);
 
-    shop = init_shop(no_barbers, no_customers, seat_capacity, 
-        customer_min, customer_max, barber_min, barber_max);
+    shop = init_shop(no_barbers, no_customers, seat_capacity);
 
-    
     int rc;
 
     rc = pthread_create(&assistant_thread, NULL, assistant_routine, NULL); // barber routine takes barber_pace as the arg
@@ -151,5 +149,7 @@ int main(int argc, char **argv) {
     {
         pthread_join(customer_threads[i], NULL);
     }
+
+    printf("Main thread: All customers have now been served. Salon is closed now.\n");
 
 }
