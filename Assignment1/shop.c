@@ -49,6 +49,17 @@ Shop init_shop(int no_barbers, int no_customers, int seating_capacity) {
 void assistant_waiting_customer(void) {
 
     pthread_mutex_lock(&waiting_room_mutex);
+
+        if (shop.no_customers == 0) {
+            printf("Assistant: Hi barbers. We are closing early as we have no appointments today. See you all tomorrow!\n");
+            for (int i = 0; i < shop.no_barbers; i++) {
+                get_barber(i)->customer_id = -2;
+                pthread_cond_signal(&get_barber(i)->barber_cond);
+            }
+            pthread_mutex_unlock(&barber_room_mutex);
+            pthread_exit(EXIT_SUCCESS);
+        }
+
         while (is_empty(customers_queue) && assistant.no_leaving >= 0) {
             printf("Assistant: I'm waiting for customers.\n");
             pthread_cond_wait(&assistant.customer_cond, &waiting_room_mutex);
@@ -102,7 +113,7 @@ void assistant_assign_customer_barber(void) {
     pthread_cond_signal(&get_barber(barber_id)->barber_cond);
     pthread_cond_signal(&customers[customer_id].customer_cond);
 
-    printf("Assistant: I'm assigning Customer %d to Barber %d.\n", customer_id, barber_id);
+    printf("Assistant: I'm assigning Customer %d to Barber %d.\n", customer_id + 1, barber_id + 1);
 
 }
 
@@ -110,10 +121,10 @@ void assistant_assign_customer_barber(void) {
 int arrive_shop(int customer_id) {
 
     pthread_mutex_lock(&waiting_room_mutex);
-    printf("Customer [%d]: I have arrived at the barber shop. \n", customer_id);
+    printf("Customer [%d]: I have arrived at the barber shop. \n", customer_id + 1);
 
     if (is_full(customers_queue)) {
-        printf("Customer [%d]: Oh no! All seats have been taken and I'll leave now!\n", customer_id);
+        printf("Customer [%d]: Oh no! All seats have been taken and I'll leave now!\n", customer_id + 1);
         assistant.no_leaving++;
 
         if (assistant.no_leaving == shop.no_customers) {
@@ -132,19 +143,19 @@ int arrive_shop(int customer_id) {
     pthread_cond_init(&customers[customer_id].customer_cond, NULL);
     int barber_id;
     int ticket_id = assistant.ticket_id % shop.seat_capacity;
-    printf("Customer [%d]: I'm lucky to get a free seat and a ticket numbered %d\n", customer_id, ticket_id);
+    printf("Customer [%d]: I'm lucky to get a free seat and a ticket numbered %d\n", customer_id + 1, ticket_id + 1);
     push(customers_queue, customer_id);
     assistant.ticket_id++;
     pthread_cond_signal(&assistant.customer_cond);
 
     while (customers[customer_id].barber_id == -1) {
-        printf("Customer [%d]: I'm waiting to be assigned to a barber.\n", customer_id);
+        printf("Customer [%d]: I'm waiting to be assigned to a barber.\n", customer_id + 1);
         pthread_cond_wait(&customers[customer_id].customer_cond, &waiting_room_mutex);
     }
 
     barber_id = customers[customer_id].barber_id;
     printf("Customer [%d]: My ticket numbered %d has been called. Hello, Barber %d\n",
-      customer_id, ticket_id, barber_id);
+      customer_id + 1, ticket_id + 1, barber_id + 1);
     assistant.ticket_id--;
     pthread_mutex_unlock(&waiting_room_mutex);
     
@@ -159,14 +170,14 @@ void leave_shop(int customer_id, int barber_id) {
 
     pthread_mutex_lock(&barber_mutex);
     
-    printf("Customer [%d]: I am being served\n", customer_id);
+    printf("Customer [%d]: I am being served\n", customer_id + 1);
 
     while (customers[customer_id].barber_id != -1) {
         pthread_cond_wait(&customers[customer_id].customer_cond, &barber_mutex);
     }
 
     customers[customer_id].current_state = LEAVING;
-    printf("Customer [%d]: Well done. Thank Barber %d, bye!\n", customer_id, barber_id);
+    printf("Customer [%d]: Well done. Thank Barber %d, bye!\n", customer_id + 1, barber_id + 1);
     assistant.no_leaving++;
 
     if (assistant.no_leaving == shop.no_customers) {
@@ -191,30 +202,31 @@ void barber_service(int barber_id) {
         while (get_barber(barber_id)->customer_id == -1) {
             pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_room_mutex);
         }
-
-        if (get_barber(barber_id)->customer_id == -2) {
-            printf("Barber [%d]: Thanks Assistant. See you tomorrow!\n", barber_id);
-            pthread_mutex_unlock(&barber_room_mutex);
-            pthread_exit(EXIT_SUCCESS);
-        }
     }
+
+    if (get_barber(barber_id)->customer_id == -2) {
+        printf("Barber [%d]: Thanks Assistant. See you tomorrow!\n", barber_id + 1);
+        pthread_mutex_unlock(&barber_room_mutex);
+        pthread_exit(EXIT_SUCCESS);
+    }
+
     pthread_mutex_unlock(&barber_room_mutex);
 
     pthread_mutex_lock(&barber_mutex);
 
     while (customers[get_barber(barber_id)->customer_id].current_state != CUTTING) {
-        printf("Barber[%d]: I'm now waiting for customer to sit down. \n", barber_id);
+        printf("Barber[%d]: I'm now waiting for customer to sit down. \n", barber_id + 1);
         pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_mutex);
     }
 
-    printf("Barber [%d]: Hello, Customer %d. \n", barber_id, get_barber(barber_id)->customer_id);
+    printf("Barber [%d]: Hello, Customer %d. \n", barber_id + 1, (get_barber(barber_id)->customer_id) + 1);
     pthread_mutex_unlock(&barber_mutex);
 }
 
 void barber_done(int barber_id) {
     pthread_mutex_lock(&barber_mutex);
 
-    printf("Barber [%d]: Finished cutting. Good bye Customer %d.\n", barber_id, get_barber(barber_id)->customer_id);
+    printf("Barber [%d]: Finished cutting. Good bye Customer %d.\n", barber_id + 1, (get_barber(barber_id)->customer_id) + 1);
 
     customers[get_barber(barber_id)->customer_id].barber_id = -1;
     pthread_cond_signal(&customers[get_barber(barber_id)->customer_id].customer_cond);
@@ -226,7 +238,7 @@ void barber_done(int barber_id) {
     get_barber(barber_id)->customer_id = -1;
     push(barber_queue, barber_id);
     pthread_cond_signal(&assistant.barber_cond);
-    printf("Barber[%d]: I'm now ready to accept a new customer. \n", barber_id);
+    printf("Barber[%d]: I'm now ready to accept a new customer. \n", barber_id + 1);
     pthread_mutex_unlock(&barber_mutex);
 }
 

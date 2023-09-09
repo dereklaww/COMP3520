@@ -90,10 +90,22 @@ int main(int argc, char **argv) {
     printf("Enter customer's max arrival rate (int): ");
     scanf("%d", &customer_max);
 
-    if ((barber_min > barber_max) 
-        || (customer_min > customer_max)) {
-            printf("Invalid inputs: min values > max values.\n");
+    if (barber_min > barber_max) {
+        printf("Main Thread: barber min working pace cannot be greater than max working pace.\n");
+        return 1;
+    } else if (customer_min > customer_max) {
+        printf("Main Thread: customer min arrival time cannot be greater than max arrival time.\n");
+        return 1;
     }
+
+    if (no_barbers < 1) {
+        printf("Main Thread: All barbers are on holiday today. Shop requires at least one barber.\n");
+        return 1;
+    } if (seat_capacity < 1) {
+        printf("Main Thread: Waiting room is on renovation today. Shop requires at least one waiting seat.\n");
+        return 1;
+    }
+
 
     barber_argv_arr = malloc(sizeof(barber_argv) * no_barbers);
 
