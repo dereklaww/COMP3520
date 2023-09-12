@@ -21,5 +21,6 @@ int pop(Queue *queue);
 int front(Queue *queue);
 int rear(Queue *queue);
 int get_size(Queue *queue);
+void destroy(Queue *queue);
 
 #endif

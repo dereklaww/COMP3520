@@ -167,4 +167,10 @@ int main(int argc, char **argv) {
 
     printf("Main thread: All customers have now been served. Salon is closed now.\n");
 
+    /* deallocate memory */
+    free(barber_argv_arr);
+    free(barber_threads);
+    free(customer_threads);
+    free(t_ids);
+    destroy_shop();
 }

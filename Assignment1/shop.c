@@ -50,6 +50,7 @@ void assistant_waiting_customer(void) {
 
     pthread_mutex_lock(&waiting_room_mutex);
 
+        /* edge case: no appointments */ 
         if (shop.no_customers == 0) {
             printf("Assistant: Hi barbers. We are closing early as we have no appointments today. See you all tomorrow!\n");
             for (int i = 0; i < shop.no_barbers; i++) {
@@ -59,7 +60,8 @@ void assistant_waiting_customer(void) {
             pthread_mutex_unlock(&barber_room_mutex);
             pthread_exit(EXIT_SUCCESS);
         }
-
+        
+        /* no customer in queue */ 
         while (is_empty(customers_queue) && assistant.no_leaving >= 0) {
             printf("Assistant: I'm waiting for customers.\n");
             pthread_cond_wait(&assistant.customer_cond, &waiting_room_mutex);
@@ -73,11 +75,13 @@ void assistant_waiting_barber(void) {
     
     pthread_mutex_lock(&barber_room_mutex);
 
+        /* no barber in queue */
         printf("Assistant: I'm waiting for barbers to become available.\n");
         while (is_empty(barber_queue)) {
             pthread_cond_wait(&assistant.barber_cond, &barber_room_mutex);
         }
 
+        /* shop close condition */
         if (assistant.no_leaving == -1){
             while (!is_full(barber_queue)) {
                 pthread_cond_wait(&assistant.barber_cond, &barber_room_mutex);
@@ -96,12 +100,13 @@ void assistant_waiting_barber(void) {
 
 void assistant_assign_customer_barber(void) {
 
+    /* get the customer */
     pthread_mutex_lock(&waiting_room_mutex);
     int customer_id = front(customers_queue);
     pop(customers_queue);
     pthread_mutex_unlock(&waiting_room_mutex);
 
-
+    /* get barber */
     pthread_mutex_lock(&barber_room_mutex);
     int barber_id = front(barber_queue);
     pop(barber_queue);
@@ -117,7 +122,6 @@ void assistant_assign_customer_barber(void) {
 
 }
 
-//require assistant to assign a barber to a customer and ticket id
 int arrive_shop(int customer_id) {
 
     pthread_mutex_lock(&waiting_room_mutex);
@@ -135,6 +139,7 @@ int arrive_shop(int customer_id) {
         return -1;
     }
 
+    /* instantiate customer struct */
     customers[customer_id] = (Customer) {
         .id = customer_id,
         .barber_id = -1
@@ -183,10 +188,11 @@ void leave_shop(int customer_id, int barber_id) {
         assistant.no_leaving = -1;
         pthread_cond_signal(&assistant.customer_cond);
     }
-    // pthread_cond_signal(&get_barber(barber_id)->barber_cond);
+    
     pthread_mutex_unlock(&barber_mutex);
 }
 
+/* initially pushes barber to queue */ 
 void barber_initial_begin(int barber_id) {
     pthread_mutex_lock(&barber_room_mutex);
     push(barber_queue, barber_id);
@@ -197,12 +203,14 @@ void barber_initial_begin(int barber_id) {
 void barber_service(int barber_id) {
     pthread_mutex_lock(&barber_room_mutex);
 
+    /* wait to be assigned customer */ 
     if (get_barber(barber_id)->customer_id == -1) {
         while (get_barber(barber_id)->customer_id == -1) {
             pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_room_mutex);
         }
     }
 
+    /* shop close condition signalled by assistant */
     if (get_barber(barber_id)->customer_id == -2) {
         printf("Barber [%d]: Thanks Assistant. See you tomorrow!\n", barber_id + 1);
         pthread_mutex_unlock(&barber_room_mutex);
@@ -230,10 +238,6 @@ void barber_done(int barber_id) {
     customers[get_barber(barber_id)->customer_id].barber_id = -1;
     pthread_cond_signal(&customers[get_barber(barber_id)->customer_id].customer_cond);
 
-    // while (customers[get_barber(barber_id)->customer_id].current_state != LEAVING) {
-    //     pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_mutex);
-    // }
-
     get_barber(barber_id)->customer_id = -1;
     push(barber_queue, barber_id);
     pthread_cond_signal(&assistant.barber_cond);
@@ -251,3 +255,14 @@ Barber *get_barber(int barber_id) {
     return NULL;
 }
 
+void destroy_shop(void) {
+    pthread_mutex_destroy(&waiting_room_mutex);
+    pthread_mutex_destroy(&barber_room_mutex);
+    pthread_mutex_destroy(&barber_mutex);
+    pthread_cond_destroy(&assistant.customer_cond);
+    pthread_cond_destroy(&assistant.barber_cond);
+    destroy(customers_queue);
+    destroy(barber_queue);
+    free(barbers);
+    free(customers);
+}

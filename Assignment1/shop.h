@@ -51,5 +51,6 @@ void assistant_waiting_customer(void);
 void assistant_waiting_barber(void);
 void assistant_assign_customer_barber(void);
 Barber *get_barber(int barber_id);
+void destroy_shop(void);
 
 #endif

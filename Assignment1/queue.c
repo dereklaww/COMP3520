@@ -57,3 +57,8 @@ int get_size(Queue *queue) {
     return queue->occupied;
 }
 
+void destroy(Queue *queue) {
+    free(queue->array);
+    free(queue);
+}
+
