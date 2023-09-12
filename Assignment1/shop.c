@@ -156,7 +156,6 @@ int arrive_shop(int customer_id) {
     barber_id = customers[customer_id].barber_id;
     printf("Customer [%d]: My ticket numbered %d has been called. Hello, Barber %d\n",
       customer_id + 1, ticket_id + 1, barber_id + 1);
-    assistant.ticket_id--;
     pthread_mutex_unlock(&waiting_room_mutex);
     
     pthread_mutex_lock(&barber_mutex);
