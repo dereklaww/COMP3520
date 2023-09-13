@@ -18,6 +18,7 @@ typedef struct Customer {
     pthread_cond_t customer_cond;
     int current_state;
     int barber_id;
+    int ticket_id;
 } Customer;
 
 typedef struct Shop {

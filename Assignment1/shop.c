@@ -147,8 +147,8 @@ int arrive_shop(int customer_id) {
 
     pthread_cond_init(&customers[customer_id].customer_cond, NULL);
     int barber_id;
-    int ticket_id = assistant.ticket_id % shop.seat_capacity;
-    printf("Customer [%d]: I'm lucky to get a free seat and a ticket numbered %d\n", customer_id + 1, ticket_id + 1);
+    customers[customer_id].ticket_id = assistant.ticket_id % shop.seat_capacity;
+    printf("Customer [%d]: I'm lucky to get a free seat and a ticket numbered %d\n", customer_id + 1, customers[customer_id].ticket_id + 1);
     push(customers_queue, customer_id);
     assistant.ticket_id++;
     pthread_cond_signal(&assistant.customer_cond);
@@ -160,7 +160,7 @@ int arrive_shop(int customer_id) {
 
     barber_id = customers[customer_id].barber_id;
     printf("Customer [%d]: My ticket numbered %d has been called. Hello, Barber %d\n",
-      customer_id + 1, ticket_id + 1, barber_id + 1);
+      customer_id + 1, customers[customer_id].ticket_id + 1, barber_id + 1);
     pthread_mutex_unlock(&waiting_room_mutex);
     
     pthread_mutex_lock(&barber_mutex);
@@ -226,7 +226,9 @@ void barber_service(int barber_id) {
         pthread_cond_wait(&get_barber(barber_id)->barber_cond, &barber_mutex);
     }
 
-    printf("Barber [%d]: Hello, Customer %d. \n", barber_id + 1, (get_barber(barber_id)->customer_id) + 1);
+    int customer_id = (get_barber(barber_id)->customer_id);
+
+    printf("Barber [%d]: Hello, Customer %d with ticket number %d. \n", barber_id + 1, customer_id + 1, (customers[customer_id].ticket_id) + 1);
     pthread_mutex_unlock(&barber_mutex);
 }
 
