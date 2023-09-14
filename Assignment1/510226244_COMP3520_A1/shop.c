@@ -228,7 +228,7 @@ void barber_service(int barber_id) {
 
     int customer_id = (get_barber(barber_id)->customer_id);
 
-    printf("Barber [%d]: Hello, Customer %d with ticket number %d. \n", barber_id + 1, customer_id + 1, (customers[customer_id].ticket_id) + 1);
+    printf("Barber [%d]: Hello, Customer %d with ticket number %d.\n", barber_id + 1, customer_id + 1, (customers[customer_id].ticket_id) + 1);
     pthread_mutex_unlock(&barber_mutex);
 }
 
