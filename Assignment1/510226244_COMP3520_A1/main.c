@@ -8,6 +8,7 @@ int customer_max;
 int barber_min;
 int barber_max;
 
+Shop shop;
 barber_argv *barber_argv_arr;
 
 pthread_t *barber_threads;
@@ -119,7 +120,7 @@ int main(int argc, char **argv) {
     customer_threads = malloc(sizeof(pthread_t) * no_customers);
     t_ids = malloc(sizeof(int) * no_customers);
 
-    init_shop(no_barbers, no_customers, seat_capacity);
+    shop = init_shop(no_barbers, no_customers, seat_capacity);
 
     int rc;
 

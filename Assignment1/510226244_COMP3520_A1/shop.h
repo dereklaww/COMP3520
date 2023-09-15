@@ -42,7 +42,7 @@ enum CustomerState {
     LEAVING,
 };
 
-void init_shop(int no_barbers, int no_customers, int seating_capacity);   
+Shop init_shop(int no_barbers, int no_customers, int seating_capacity);   
 int arrive_shop(int customer_id);
 void leave_shop(int customer_id, int barber_id);
 void barber_initial_begin(int barber_id);

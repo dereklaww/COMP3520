@@ -11,7 +11,7 @@ Shop shop;
 
 pthread_mutex_t waiting_room_mutex, barber_room_mutex, barber_mutex;
 
-Shop init_shop(int no_barbers, int no_customers, int seating_capacity) {
+void init_shop(int no_barbers, int no_customers, int seating_capacity) {
     
     shop = (Shop) {
         .no_barbers = no_barbers,
@@ -42,8 +42,6 @@ Shop init_shop(int no_barbers, int no_customers, int seating_capacity) {
         barbers[i].customer_id = -1;
         pthread_cond_init(&barbers[i].barber_cond, NULL);
     }
-
-    return shop;
 }
 
 void assistant_waiting_customer(void) {
