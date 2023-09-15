@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "*.rmd": "markdown",
+        "__hash_table": "c",
+        "__split_buffer": "c",
+        "array": "c",
+        "bitset": "c",
+        "deque": "c",
+        "initializer_list": "c",
+        "queue": "c",
+        "unordered_map": "c",
+        "vector": "c",
+        "random": "c",
+        "string_view": "c",
+        "format": "c"
+    }
+}

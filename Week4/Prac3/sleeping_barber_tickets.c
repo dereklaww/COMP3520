@@ -252,7 +252,6 @@ void *assistant_routine(void *arg) {
         
 
         pthread_mutex_lock(&access_barberroom);
-        printf("barber busy: %d\n", barber_busy);
         while (barber_busy) {
             if ((calling_index < no_of_customers - 1)){
                 printf("Assistant: I'm waiting for barber to become available.\n");
