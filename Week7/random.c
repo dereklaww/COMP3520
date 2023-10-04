@@ -59,17 +59,14 @@ int main (int argc, char *argv[])
 
     if (no_of_jobs < 1)
     {
-        fprintf(stderr, "Sorry, the number of jobs to be dispatched must be at
-        least one.\n");
+        fprintf(stderr, "Sorry, the number of jobs to be dispatched must be at least one.\n");
         goto CHECKPOINT;
     }
 
-    printf("Please enter the mean of the random Poisson distribution for intervals
-    between job arrivals: ");
+    printf("Please enter the mean of the random Poisson distribution for intervals between job arrivals: ");
     scanf("%f", &lambda_arrival);
 
-    printf("Please enter the inverse of the mean of the random exponential
-    distribution for job execution duration: ");
+    printf("Please enter the inverse of the mean of the random exponential distribution for job execution duration: ");
     scanf("%f", &lambda_service);
 
     srand(time(0)); // Seed the random number generator
@@ -91,9 +88,9 @@ int main (int argc, char *argv[])
         p = 1;
         do
         {
-        k += 1;
-        u = rand()/(double)RAND_MAX;
-        p *= u;
+            k += 1;
+            u = rand()/(double)RAND_MAX;
+            p *= u;
         } while (p > L);
         x += k - 1;
         /* Generate job service times in accordance with the exponential
