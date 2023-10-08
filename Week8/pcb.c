@@ -26,6 +26,7 @@ PcbPtr createnullPcb()
     new_process_Ptr->remaining_cpu_time = 0;
     new_process_Ptr->status = PCB_UNINITIALIZED;
     new_process_Ptr->next = NULL;
+    new_process_Ptr->no_iterations = 0;
     return new_process_Ptr;
 }
 
@@ -37,14 +38,20 @@ PcbPtr createnullPcb()
 ******************************************************/
 PcbPtr enqPcb(PcbPtr q, PcbPtr p)
 {
-    PcbPtr h = q;
-    p->next = NULL;
-    if (q) {
-        while (q->next) q = q->next;
-        q->next = p;
-        return h;
+    if (!q)
+    {
+        return p;
     }
-    return p;
+    else
+    {
+        PcbPtr tmp = q;
+        for (; tmp->next != NULL; tmp = tmp->next)
+        {
+            ;
+        }
+        tmp->next = p;
+        return q;
+    }
 }
 
 /*******************************************************
@@ -59,12 +66,17 @@ PcbPtr enqPcb(PcbPtr q, PcbPtr p)
 
 PcbPtr deqPcb(PcbPtr * hPtr)
 {
-    PcbPtr p;
-    if (hPtr && (p = * hPtr)) {
-        * hPtr = p->next;
-        return p;
+    if (!hPtr || !(*hPtr))
+    {
+        return NULL;
     }
-    return NULL;
+    else
+    {
+        PcbPtr tmp = *hPtr;
+        *hPtr = (*hPtr)->next;
+        tmp->next = NULL;
+        return tmp;
+    }
 }
 
 /*******************************************************
@@ -81,18 +93,15 @@ PcbPtr startPcb (PcbPtr p)
         switch (p->pid = fork()) //so start it
         {
             case -1:
-            fprintf(stderr, "FATAL: Could not fork process!\n");
-            exit(EXIT_FAILURE);
+                fprintf(stderr, "FATAL: Could not fork process!\n");
+                exit(EXIT_FAILURE);
 
             case 0: //child
-            p->pid = getpid();
-            p->status = PCB_RUNNING;
-            printPcbHdr();
-            printPcb(p);
-            fflush(stdout);
-            execv(p->args[0], p->args);
-            fprintf(stderr, "ALERT: You should never see me!\n");
-            exit(EXIT_FAILURE);
+                p->pid = getpid();
+                p->status = PCB_RUNNING;
+                execv(p->args[0], p->args);
+                fprintf(stderr, "ALERT: You should never see me!\n");
+                exit(EXIT_FAILURE);
         }
     }
     else // already started, so continue
@@ -100,6 +109,9 @@ PcbPtr startPcb (PcbPtr p)
     kill(p->pid, SIGCONT);
     }
     p->status = PCB_RUNNING;
+    printPcbHdr();
+    printPcb(p);
+    fflush(stdout);
     return p;
 }
 

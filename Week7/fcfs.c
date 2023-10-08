@@ -8,17 +8,6 @@
 /* Include files */
 #include "fcfs.h"
 
-void waitingTime(int *wt, int *bt, int n) {
-    wt[0] = 0;
-	for (int i = 1; i < n ; i++ )
-		wt[i] = bt[i-1] + wt[i-1] ;
-}
-void turnAroundTime(int n, int *bt, int *wt, int *tat) //function to find the waitingtime
-{
-	for (int i = 0; i < n ; i++)
-		tat[i] = bt[i] + wt[i];
-}
-
 int main (int argc, char *argv[])
 {
     /*** Main function variable declarations ***/
@@ -27,6 +16,8 @@ int main (int argc, char *argv[])
     PcbPtr current_process = NULL;
     PcbPtr process = NULL;
     int timer = 0;
+    int turnaround_time;
+    double av_turnaround_time = 0.0, av_wait_time = 0.0;
     int num_process = 0;
 
     // 1. Populate the FCFS queue
@@ -62,10 +53,6 @@ int main (int argc, char *argv[])
 
     }
 
-    int *arrival_time_arr = malloc(num_process * sizeof(int));
-    int *burst_time_arr = malloc(num_process * sizeof(int));
-    int current_process_id = 0;
-
     // 2. Whenever there is a running process or the FCFS queue is not empty:
     while (current_process || fcfs_queue)
     {
@@ -74,15 +61,15 @@ int main (int argc, char *argv[])
         {
             // a. Decrement the process's remaining_cpu_time variable;
             current_process->remaining_cpu_time--;
-            arrival_time_arr[current_process_id] = current_process->arrival_time;
-            burst_time_arr[current_process_id] = current_process->service_time;
              
             // b. If the process's allocated time has expired:
             if (current_process->remaining_cpu_time <= 0)
             {
-                current_process_id++;
                 // A. Terminate the process;
                 terminatePcb(current_process);
+                turnaround_time = timer - current_process->arrival_time;
+                av_turnaround_time += turnaround_time;
+                av_wait_time += turnaround_time - current_process->service_time;
                 // B. Deallocate the PCB (process control block)'s memory
                 free(current_process);
                 current_process = NULL;
@@ -103,27 +90,12 @@ int main (int argc, char *argv[])
         timer++;
         // v. Go back to 2.
     }
+    // print out average turnaround time and average wait time
+    av_turnaround_time = av_turnaround_time / num_process;
+    av_wait_time = av_wait_time / num_process;
+    printf("average turnaround time = %0.4f\n", av_turnaround_time);
+    printf("average wait time = %0.4f\n", av_wait_time);
     // 3. Terminate the FCFS dispatcher
-
-    int *waiting_time_arr = malloc(num_process * sizeof(int));
-    int *turn_arround_arr = malloc(num_process * sizeof(int));
-    int total_wt = 0;
-    int total_tat = 0;
-
-    waitingTime(waiting_time_arr, burst_time_arr, num_process);
-    turnAroundTime(num_process, burst_time_arr, waiting_time_arr, turn_arround_arr);
-
-    for (int i = 0; i < num_process ; i++ ) {
-		total_wt = total_wt + waiting_time_arr[i];
-        total_tat = total_tat + turn_arround_arr[i];
-    }
-
-    float a_wt = total_wt/num_process;
-    float a_tat = total_tat/num_process;
-
-    printf("Average Waiting Time = %0.4f, Average Turnaround Time = %0.4f\n", a_wt, a_tat);
-
-
     exit(EXIT_SUCCESS);
 }
 
