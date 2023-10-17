@@ -4,6 +4,9 @@
  * ***/
 
 #include "mlq.h"
+
+#define PRINT_DEBUG 1
+
 enum scheduler {
     L0_FCFS,
     L1_RR,
@@ -104,7 +107,10 @@ int main (int argc, char *argv[])
         // ii. If a process is currently running;
         if (current_process) {
 
+            #ifdef PRINT_DEBUG
             printf("curr schedular: %d\n", current_schedular);
+            #endif
+
             switch (current_schedular) {
 
                 case L0_FCFS:
@@ -221,10 +227,17 @@ int main (int argc, char *argv[])
         time_quantum ?
         current_process->remaining_cpu_time :
         !(current_process) ? 1 : time_quantum;
+
+        #ifdef PRINT_DEBUG
         printf("quantum: %d\n", quantum);
+        #endif
+
         sleep(quantum);
         // v. Increment dispatcher timer;
         timer += quantum;
+        #ifdef PRINT_DEBUG
+        printf("current timer: %d\n", timer);
+        #endif
         current_schedular = next_schedular;
         // vi. Go back to 3.
     }
