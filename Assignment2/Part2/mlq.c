@@ -97,7 +97,6 @@ int main (int argc, char *argv[])
             process = deqPcb(&dispatch_queue); // dequeue process
             process->status = PCB_INITIALIZED; // set pcb ready
             arrival_queue = enqPcb(arrival_queue, process); // & put on arrival queue
-            printf("process mem: %d\n", process->process_mem);
         }
 
         if (arrival_queue) {
@@ -107,7 +106,7 @@ int main (int argc, char *argv[])
                 process->allocated_mem = mem_block;
                 process->status = PCB_READY;
                 fcfs_l0 = enqPcb(fcfs_l0, process);
-                print_tree();
+                // print_tree();
             }
         }
         
@@ -129,8 +128,8 @@ int main (int argc, char *argv[])
                         terminatePcb(current_process);
                         mem_free(current_process->allocated_mem);
                         
-                        printf("free\n");
-                        print_tree();
+                        // printf("free\n");
+                        // print_tree();
 
                         // Calculate and acumulate turnaround time and wait time;
                         turnaround_time = timer - current_process->arrival_time;
@@ -158,8 +157,8 @@ int main (int argc, char *argv[])
                         // A. Send SIGINT to the process to terminate it;
                         terminatePcb(current_process);
                         mem_free(current_process->allocated_mem);
-                        printf("free\n");
-                        print_tree();
+                        // printf("free\n");
+                        // print_tree();
                         // Calculate and acumulate turnaround time and wait time;
                         turnaround_time = timer - current_process->arrival_time;
                         av_turnaround_time += turnaround_time;
@@ -196,8 +195,8 @@ int main (int argc, char *argv[])
                         // A. Terminate the process;
                         terminatePcb(current_process);
                         mem_free(current_process->allocated_mem);
-                        printf("free\n");
-                        print_tree();
+                        // printf("free\n");
+                        // print_tree();
                         turnaround_time = timer - current_process->arrival_time;
                         av_turnaround_time += turnaround_time;
                         av_wait_time += turnaround_time - current_process->service_time;

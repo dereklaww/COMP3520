@@ -45,7 +45,7 @@ print_tree() {
         printf("Container %d; ", i);
         Mab *temp = container[i];
         while (temp != NULL) {
-            printf("%d ", temp->allocated);
+            printf("%d ", temp->offset_address);
             temp = temp->next;
         }
         printf("\n");
@@ -65,14 +65,12 @@ init_mem_system()
 
 void 
 search_remove(int level) {
-
-    if (container[level] == NULL) {
-        return;
-    }
     // find node to remove
     while (container[level]->remove != true) {
         container[level] = container[level]->next;
     }
+
+    container[level]->remove = false;
 
     if (container[level]->prev != NULL) {
         container[level]->prev->next = container[level]->next;
@@ -100,9 +98,8 @@ mem_split(Mab *mem_block, int mem_request) {
 
     if (mem_block->right_child_block==NULL && 
         mem_block->left_child_block==NULL && 
-        mem_block->size > mem_request && 
-        mem_block-> allocated == false &&
-        found_node == false) 
+        mem_block->size >= mem_request && 
+        mem_block-> allocated == false) 
         {
             Mab * new_node_left = init_mem_block(mem_block->size/2, mem_block->offset_address);
             Mab * new_node_right = init_mem_block(mem_block->size/2, mem_block->offset_address + mem_block->size/2);
@@ -169,7 +166,7 @@ mem_split(Mab *mem_block, int mem_request) {
                 #ifndef DEBUG_PRINT
                     printf("test\n");
                 #endif
-                allocate_block =  new_node_left;
+                allocate_block =  mem_block -> left_child_block;
                 return 0;
             }
         }
@@ -190,6 +187,7 @@ mem_split(Mab *mem_block, int mem_request) {
             }
         }
     } 
+        
     return 0;
 }
 
@@ -212,19 +210,16 @@ mem_alloc(int mem_request) {
 
     // free memory block if that size is available
     if (container[level] != NULL) {
-        
-        if (container[level]->size == allocated_mem){
-            allocate_block = container[level];
+        allocate_block = container[level];
 
-            if (container[level] -> next != NULL) {
-                container[level] = container[level]-> next;
-                container[level] -> prev = NULL;
-            } else 
-                container[level] = NULL;
+        if (container[level] -> next != NULL) {
+            container[level] = container[level]-> next;
+            container[level] -> prev = NULL;
+        } else 
+            container[level] = NULL;
 
-            allocate_block -> next = NULL;
-            allocate_block -> prev = NULL;
-        }   
+        allocate_block -> next = NULL;
+        allocate_block -> prev = NULL;
     }
     // no free memory block of that size is available
     else {
@@ -246,18 +241,17 @@ mem_alloc(int mem_request) {
     if (allocate_block == NULL) {
         return NULL;
     }
+   
     // remove from free container
 
     if (allocate_block -> remove == true) {
         int block_level = allocate_block -> level;
-        
 
         #ifndef DEBUG_PRINT
         printf("toremove1: %d\n", container[block_level] -> size);
         printf("toremove1: %d\n", allocate_block->size); 
         #endif
 
-        printf("%d\n", block_level);
         search_remove(block_level);
     }
     allocate_block -> allocated = true;
@@ -277,33 +271,32 @@ mem_merge (Mab* mem_block) {
         mem_block->parent_block->left_child_block->left_child_block==NULL && // check left child block doesnt not have children
         mem_block->parent_block->left_child_block->right_child_block==NULL && // check left child block doesnt not have children
         mem_block->parent_block->right_child_block->left_child_block==NULL && // check right child block doesnt not have children
-        mem_block->parent_block->right_child_block->right_child_block==NULL) // check left child block doesnt not have children
+        mem_block->parent_block->right_child_block->left_child_block==NULL) // check left child block doesnt not have children
         {
 
             // able to merge
             if (mem_block->parent_block->left_child_block->allocated==false &&
                 mem_block->parent_block->right_child_block->allocated==false)
             {   
-                
                 // if mem_block is a left child
                 if (mem_block->parent_block->left_child_block == mem_block) {
                     // remove the right sibling
                     Mab* to_free = mem_block->parent_block->right_child_block;
                     to_free->remove = true;
 
-                    int right_child_level = to_free->level;
+                    int right_child_level = mem_block->parent_block->right_child_block->level;
 
                     search_remove(right_child_level);
                     free(to_free);
                 }
                 
                 // if mem_block is a right child
-                else if (mem_block->parent_block->right_child_block == mem_block) {
+                else {
                     // remove the left sibling
                     Mab* to_free = mem_block->parent_block->left_child_block;
                     to_free->remove = true;
 
-                    int left_child_level = to_free->level;
+                    int left_child_level = mem_block->parent_block->left_child_block->level;
 
                     search_remove(left_child_level);
                     free(to_free);
@@ -315,7 +308,7 @@ mem_merge (Mab* mem_block) {
                 mem_merge(mem_block->parent_block);
 
             } else {
-                
+
                 // inserting node into free list
                 if (mem_block->parent_block->left_child_block->allocated == true) {
 
@@ -332,7 +325,7 @@ mem_merge (Mab* mem_block) {
                         container[right_child_level]->prev = NULL;
                         container[right_child_level]->next = NULL;
                     }
-                } else if (mem_block->parent_block->right_child_block->allocated == true) {
+                } else {
 
                     int left_child_level = mem_block->parent_block->left_child_block->level;
 
@@ -350,26 +343,27 @@ mem_merge (Mab* mem_block) {
                 }
             }
         } else {
-
-            int level = mem_block->level;
-    
-            if (container[level] != NULL){
-                while (container[level]->next != NULL) {
-                    container[level] = container[level]->next;
+            // at root node
+            if (mem_block->parent_block == NULL) {
+                int level = mem_block->level;
+                
+                if (container[level] != NULL){
+                    while (container[level]->next != NULL) {
+                        container[level] = container[level]->next;
+                    }
+                    container[level]->next = mem_block;
+                    mem_block->prev = container[level];
+                } else {
+                    container[level] = mem_block;
+                    container[level]->prev = NULL;
+                    container[level]->next = NULL;
                 }
-                container[level]->next = mem_block;
-                mem_block->prev = container[level];
-            } else {
-                container[level] = mem_block;
-                container[level]->prev = NULL;
-                container[level]->next = NULL;
-            }   
+            }
         }
 }
 
 void
 mem_free (Mab* mem_block) {
-
 
     if (mem_block == NULL) {
         return;
@@ -380,7 +374,6 @@ mem_free (Mab* mem_block) {
         mem_block->allocated = false;
         mem_freed = true;
 
-        
         if (mem_block->parent_block != NULL) {
 
             /*
@@ -389,7 +382,7 @@ mem_free (Mab* mem_block) {
             */ 
 
            if (mem_block->parent_block->left_child_block->allocated == false && 
-            mem_block->parent_block->right_child_block->allocated == false &&
+            mem_block->parent_block->left_child_block->allocated == false &&
             mem_block->parent_block->left_child_block->left_child_block == NULL &&
             mem_block->parent_block->right_child_block->right_child_block == NULL) {
 
@@ -397,22 +390,21 @@ mem_free (Mab* mem_block) {
 
                 // check if mem_block is left child
                 if (mem_block->parent_block->left_child_block == mem_block) {
-                    
                     // remove right child from free list 
                     Mab* to_free = mem_block->parent_block->right_child_block;
                     to_free->remove = true;
 
-                    int right_child_level = to_free->level;
+                    int right_child_level = mem_block->parent_block->right_child_block->level;
                     search_remove(right_child_level);
-
-                } else if (mem_block->parent_block->right_child_block == mem_block){
+                    free(to_free);
+                } else {
                     // remove left child from free list
                     Mab* to_free = mem_block->parent_block->left_child_block;
                     to_free->remove = true;
 
-                    int left_child_level = to_free->level;
-                    
+                    int left_child_level = mem_block->parent_block->left_child_block->level;
                     search_remove(left_child_level);
+                    free(to_free);
                 }
 
                 mem_block->parent_block->left_child_block = NULL;
@@ -420,7 +412,6 @@ mem_free (Mab* mem_block) {
 
                 if (mem_block->parent_block != NULL) {
                     mem_merge(mem_block->parent_block);
-                    printf("here\n");
                 }
 
            } else {
@@ -440,40 +431,34 @@ mem_free (Mab* mem_block) {
                     container[level]->next = NULL;
                 }
             }
-        } 
+        }
     }
+    if (mem_freed == false) {
+        mem_free(mem_block->left_child_block);
+        mem_free(mem_block->right_child_block);
+    } 
 }
 
 int main() {
     init_mem_system();
 
-    Mab *a, *b, *c, *d;
+    Mab *a, *b, *c, *d, *e;
 
     a = mem_alloc(8);
+    b = mem_alloc(8);
     c = mem_alloc(8);
     d = mem_alloc(8);
-    b = mem_alloc(8);
+    e = mem_alloc(8);
 
-    mem_free(a);
-    mem_free(b);
-    mem_free(c);
-    mem_free(d);
-
+    mem_free(a); 
     print_tree();
-
-    a = mem_alloc(2048);
-    mem_free(a);
-    
-    a = mem_alloc(8);
-    c = mem_alloc(8);
-    d = mem_alloc(8);
-    b = mem_alloc(8);
-
-    mem_free(a);
-    mem_free(b);
-    mem_free(c);
-    mem_free(d);
-
+    mem_free(b); 
+    print_tree();
+    mem_free(c); 
+    print_tree();
+    mem_free(d); 
+    print_tree();
+    mem_free(e); 
     print_tree();
     
     return 0;
