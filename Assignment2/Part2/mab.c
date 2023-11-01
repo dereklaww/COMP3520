@@ -444,37 +444,37 @@ mem_free (Mab* mem_block) {
     }
 }
 
-int main() {
-    init_mem_system();
+// int main() {
+//     init_mem_system();
 
-    Mab *a, *b, *c, *d;
+//     Mab *a, *b, *c, *d;
 
-    a = mem_alloc(8);
-    c = mem_alloc(8);
-    d = mem_alloc(8);
-    b = mem_alloc(8);
+//     a = mem_alloc(8);
+//     c = mem_alloc(8);
+//     d = mem_alloc(8);
+//     b = mem_alloc(8);
 
-    mem_free(a);
-    mem_free(b);
-    mem_free(c);
-    mem_free(d);
+//     mem_free(a);
+//     mem_free(b);
+//     mem_free(c);
+//     mem_free(d);
 
-    print_tree();
+//     print_tree();
 
-    a = mem_alloc(2048);
-    mem_free(a);
+//     a = mem_alloc(2048);
+//     mem_free(a);
     
-    a = mem_alloc(8);
-    c = mem_alloc(8);
-    d = mem_alloc(8);
-    b = mem_alloc(8);
+//     a = mem_alloc(8);
+//     c = mem_alloc(8);
+//     d = mem_alloc(8);
+//     b = mem_alloc(8);
 
-    mem_free(a);
-    mem_free(b);
-    mem_free(c);
-    mem_free(d);
+//     mem_free(a);
+//     mem_free(b);
+//     mem_free(c);
+//     mem_free(d);
 
-    print_tree();
+//     print_tree();
     
-    return 0;
-}
+//     return 0;
+// }
