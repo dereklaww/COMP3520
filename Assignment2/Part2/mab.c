@@ -53,14 +53,14 @@ print_tree() {
     printf("\n");
 }
 
-void 
+Mab* 
 init_mem_system()
 {
     root = init_mem_block(MAX_ALLOC, 0);
     root->level = BLOCK_COUNT - 1;
     container[BLOCK_COUNT - 1] = root;
     root_temp = root;
-    return;
+    return root;
 }
 
 void 
@@ -89,13 +89,13 @@ search_remove(int level) {
     }
 }
 
-int
+Mab *
 mem_split(Mab *mem_block, int mem_request) {
 
     if (mem_block == NULL) {
-        return 1;
+        return NULL;
     } else if (mem_block->size == 8) {
-        return 1;
+        return NULL;
     }
 
     if (mem_block->right_child_block==NULL && 
@@ -137,6 +137,7 @@ mem_split(Mab *mem_block, int mem_request) {
             new_node_left -> level = child_level;
             new_node_right -> level = child_level;
 
+            // associate child nodes with other nodes in the container
             if (container[child_level] != NULL) {
                 while (container[child_level] -> next != NULL) {
                     container[child_level] = container[child_level] -> next;
@@ -170,10 +171,11 @@ mem_split(Mab *mem_block, int mem_request) {
                     printf("test\n");
                 #endif
                 allocate_block =  new_node_left;
-                return 0;
+                return allocate_block;
             }
         }
 
+    // if unable to split, split child nodes
     if (found_node == false) {
         #ifndef DEBUG_PRINT
         printf("test2\n");
@@ -186,16 +188,17 @@ mem_split(Mab *mem_block, int mem_request) {
                 #ifndef DEBUG_PRINT
                 printf("test4\n");
                 #endif
-                return 1;
+                return NULL;
             }
         }
     } 
-    return 0;
+    return allocate_block;
 }
 
 Mab*
-mem_alloc(int mem_request) {
+mem_alloc(Mab* root_node, int mem_request) {
 
+    //normalize memory request
     int allocated_mem = norm_mem_request(mem_request);
 
     if (allocated_mem < 0) {
@@ -265,11 +268,11 @@ mem_alloc(int mem_request) {
 }
 
 // recursively check if node can be merged from leaf to root
-void 
+Mab* 
 mem_merge (Mab* mem_block) {
 
     if (mem_block == NULL) {
-        return;
+        return mem_block;
     }
 
     // check merge conditions
@@ -312,7 +315,7 @@ mem_merge (Mab* mem_block) {
                 mem_block->parent_block->left_child_block = NULL;
                 mem_block->parent_block->right_child_block = NULL;
 
-                mem_merge(mem_block->parent_block);
+                return mem_merge(mem_block->parent_block);
 
             } else {
                 
@@ -350,7 +353,7 @@ mem_merge (Mab* mem_block) {
                 }
             }
         } else {
-
+            // if node is a root node
             int level = mem_block->level;
     
             if (container[level] != NULL){
@@ -365,14 +368,15 @@ mem_merge (Mab* mem_block) {
                 container[level]->next = NULL;
             }   
         }
+    
+    return NULL;
 }
 
-void
+Mab*
 mem_free (Mab* mem_block) {
 
-
     if (mem_block == NULL) {
-        return;
+        return mem_block;
     }
 
     // no child blocks
@@ -390,8 +394,10 @@ mem_free (Mab* mem_block) {
 
            if (mem_block->parent_block->left_child_block->allocated == false && 
             mem_block->parent_block->right_child_block->allocated == false &&
-            mem_block->parent_block->left_child_block->left_child_block == NULL &&
-            mem_block->parent_block->right_child_block->right_child_block == NULL) {
+            mem_block->parent_block->left_child_block->left_child_block==NULL && // check left child block doesnt not have children
+            mem_block->parent_block->left_child_block->right_child_block==NULL && // check left child block doesnt not have children
+            mem_block->parent_block->right_child_block->left_child_block==NULL && // check right child block doesnt not have children
+            mem_block->parent_block->right_child_block->right_child_block==NULL) {
 
                 // merge nodes
 
@@ -419,8 +425,7 @@ mem_free (Mab* mem_block) {
                 mem_block->parent_block->right_child_block = NULL;
 
                 if (mem_block->parent_block != NULL) {
-                    mem_merge(mem_block->parent_block);
-                    printf("here\n");
+                    return mem_merge(mem_block->parent_block);
                 }
 
            } else {
@@ -442,6 +447,8 @@ mem_free (Mab* mem_block) {
             }
         } 
     }
+
+    return mem_block;
 }
 
 // int main() {

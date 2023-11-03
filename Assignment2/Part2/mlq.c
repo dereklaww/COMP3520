@@ -17,6 +17,7 @@ int main (int argc, char *argv[])
     PcbPtr current_process = NULL;
     PcbPtr l2_fcfs_process = NULL;
     PcbPtr process = NULL;
+    Mab* root = NULL;
     int l0_tq = 0;
     int l1_tq = 0;
     int l1_iterations = 0;
@@ -29,7 +30,7 @@ int main (int argc, char *argv[])
     double av_turnaround_time = 0.0, av_wait_time = 0.0;
     int num_process = 0;
 
-    // 1. Populate the FCFS queue
+    // 1. Populate the dispatch_queue
     if (argc <= 0)
     {
         fprintf(stderr, "FATAL: Bad arguments array\n");
@@ -48,7 +49,7 @@ int main (int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    while (!feof(input_list_stream)) { // put processes into fcfs_queue
+    while (!feof(input_list_stream)) { // put processes into dispatch_queue
         process = createnullPcb();
         if (fscanf(input_list_stream,"%d, %d, %d", &(process->arrival_time), &(process->service_time), &(process->process_mem)) != 3) {
             free(process);
@@ -86,7 +87,7 @@ int main (int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    init_mem_system();
+    root = init_mem_system();
 
     // 3. While there's anything in any of the queues or there is a currently running process:
     while (dispatch_queue || arrival_queue || fcfs_l0 || rr_l1 || fcfs_l2 || current_process ) {
@@ -99,12 +100,18 @@ int main (int argc, char *argv[])
             arrival_queue = enqPcb(arrival_queue, process); // & put on arrival queue
         }
 
+        // if there is a process in the arrival queue:
+            // check if there are any memory available to allocate to the process
         if (arrival_queue) {
-            Mab * mem_block = mem_alloc(arrival_queue->process_mem);
+            Mab * mem_block = mem_alloc(root, arrival_queue->process_mem);
+            // will only proceed if there is enough memory to allocate
             if (mem_block != NULL) {
                 process = deqPcb(&arrival_queue); // dequeue process
                 process->allocated_mem = mem_block;
                 process->status = PCB_READY;
+                turnaround_time = timer - process->arrival_time;
+                av_turnaround_time += turnaround_time;
+                av_wait_time += (turnaround_time - process->service_time);
                 fcfs_l0 = enqPcb(fcfs_l0, process);
                 // print_tree();
             }
@@ -200,6 +207,8 @@ int main (int argc, char *argv[])
                         turnaround_time = timer - current_process->arrival_time;
                         av_turnaround_time += turnaround_time;
                         av_wait_time += turnaround_time - current_process->service_time;
+                        printf ("turnaround time = %d, waiting time = %d\n", turnaround_time,
+                        turnaround_time - current_process->service_time);
                         // B. Deallocate the PCB (process control block)'s memory
                         free(current_process);
                         current_process = NULL;
@@ -261,6 +270,7 @@ int main (int argc, char *argv[])
     // print out average turnaround time and average wait time
     av_turnaround_time = av_turnaround_time / num_process;
     av_wait_time = av_wait_time / num_process;
+    print_tree();
     printf("average turnaround time = %f\n", av_turnaround_time);
     printf("average wait time = %f\n", av_wait_time);
     // 4. Terminate the dispatcher

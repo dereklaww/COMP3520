@@ -1,0 +1,123 @@
+1. Populate the dispatch queue
+2. Ask the user to specity run times for Level-0 and Level-1 time
+quantums and Level-1 iterations.
+3. Initialize memory tree by initializing 2048MB root memory block
+4. While there's any process in any of the queues or if there is 
+a running process:
+    i. Unload any pending processes from the dispatch queue:
+        While (head-of-input-queue.arrival-time <= dispatcher timer)
+        dequeue process from input queue and enqueue on arrival queue
+    ii. If there is a process in the arrival queue:
+            check if there are any memory available to allocate to the process
+            - Allocate process:
+                a. normalizes the memory request to nearest powers of 2 
+                greater than memory request.
+                b. if memory request is greater than 2048MB returns NULL
+                c. find the level of free memory binary tree that matches the 
+                requested size. level 0 - 8MB, level 8 - 2048MB
+                d. if a memory block is available in the tree, if so,
+                allocate the block by removing it from the tree and return the 
+                block.
+                e. if no memory block is found, check if there are blocks that
+                can be split into halves. If so, split and allocate. Else, return
+                NULL
+
+            - Split process:
+                a. Check if memory block is NULL or has a size of 8. If so, 
+                return NULL
+                b. Check if:
+                    - memory block has no children
+                    - memory block has size greater than memory request
+                    - memory block is not allocated
+                    - node has not been found
+                c. If split conditions are met:
+                    - initialize left and right child blocks with half the size
+                    - remove the parent block from the free tree
+                d. If conditions are not met:
+                    - try to split the memory block's child nodes.
+
+    iii. If a process is currently running:
+            if a process is currently running:
+            if it is in level 0:
+                decrement the process's remaining cpu time variable by t0
+
+                if remaining cpu time variable <= 0:
+                    send SIGINT to terminate process
+                    calculate and accumulate turnaround time and wait time
+                    free up process structure memory
+                else:
+                    send SIGTSTP to suspend process
+                    enqueue it on level 1 rr queue
+
+            else if it is in level 1:
+
+                decrement the process's remaining cpu time variable by t1
+                increment the process's number of iterations in rr
+
+                if remaining cpu time variable <= 0:
+                    send SIGINT to terminate process
+                    calculate and accumulate turnaround time and wait time
+                    free up process structure memory
+                else:
+                    if iterations > k
+                        send SIGTSTP to suspend process
+                        enqueue it on level 2 fcfs queue
+                    else if there are other processes waiting in rr queue
+                        suspend and enqueue it back on rr queue
+
+            else if it is in level 2:
+                decrement the process's remaining cpu time variable by 1
+
+                if remaining cpu time variable <= 0:
+                    send SIGINT to terminate process
+                    calculate and accumulate turnaround time and wait time
+                    free up process structure memory
+                    set level_2_process placeholder to NULL
+
+            - Memory free process:
+            a. if memory pointer is NULL return NULL
+            b. check if memory pointer does not have child nodes and is not the root node
+            c. check if the sibling node is not allocated and does not have
+                child nodes:
+                - if so, remove both the memory block and sibling node and call merge 
+                function on the parent block.
+                - else, add block into free tree and return the memory pointer.
+
+            - Memory merge process (recursively checks if node can be merged
+            from lead node to root):
+            a. if memory pointer is NULL return NULL
+            b. check if memory pointer and its sibling do not have child nodes
+            c. check if both the memory pointer and sibling node are not allocated
+                - if so, remove both nodes and call merge function on their parent
+                - else, add block into free tree and return the memory pointer.
+            d. if the sibling is allocated, add memory pointer into free list
+            e. if the node is a root node, add root into free tree.
+            
+    iv. If no process currently running:
+        a. check if there are processes waiting on level 0 fcfs and level 1 rr queue:
+            if there are:
+                dequeue and start process
+            else:
+        b. check if level_2_process placeholder is empty and there are processes waiting on level 2 fcfs queue:
+            if there are:
+                dequeue and start process
+            else if level_2_process is not NULL:
+                continue level_2_process
+        c. set time quantum based on which queue the process is dequeued from.
+        d. set next scheduler based on which queue the process is dequeued from.
+            
+    v. sleep for quantum;
+        quantum logic:
+        if there is a current running process and remaining service time is less than time quantum:
+            quantum = remaining service time
+        else if there are no running process:
+            quantum = 1
+        else:
+            quantum = time quantum of current scheduler
+
+    vi. Increment dispatcher timer and set current scheduler to next scheduler
+
+    vii. Go back to 4
+
+    viii. When all queues are empty, print out average turnaround time and average wait time.
+
