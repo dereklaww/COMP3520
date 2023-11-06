@@ -258,9 +258,9 @@ mem_alloc(MabPtr root_node, int mem_request) {
         #ifndef DEBUG_PRINT
         printf("toremove1: %d\n", container[block_level] -> size);
         printf("toremove1: %d\n", allocate_block->size); 
+        printf("%d\n", block_level);
         #endif
 
-        printf("%d\n", block_level);
         search_remove(block_level);
     }
     allocate_block -> allocated = true;

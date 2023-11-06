@@ -45,7 +45,7 @@ typedef struct mab {
     int level;
 } Mab;
 
-typedef MabPtr MabPtr;
+typedef Mab* MabPtr;
 
 MabPtr init_mem_block (int size, int offset_address);
 void print_tree();

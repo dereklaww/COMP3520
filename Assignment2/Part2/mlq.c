@@ -270,7 +270,7 @@ int main (int argc, char *argv[])
     // print out average turnaround time and average wait time
     av_turnaround_time = av_turnaround_time / num_process;
     av_wait_time = av_wait_time / num_process;
-    print_tree();
+    // print_tree();
     printf("average turnaround time = %f\n", av_turnaround_time);
     printf("average wait time = %f\n", av_wait_time);
     // 4. Terminate the dispatcher
