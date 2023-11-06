@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
     PcbPtr current_process = NULL;
     PcbPtr l2_fcfs_process = NULL;
     PcbPtr process = NULL;
-    Mab* root = NULL;
+    MabPtr root = NULL;
     int l0_tq = 0;
     int l1_tq = 0;
     int l1_iterations = 0;
@@ -103,7 +103,7 @@ int main (int argc, char *argv[])
         // if there is a process in the arrival queue:
             // check if there are any memory available to allocate to the process
         if (arrival_queue) {
-            Mab * mem_block = mem_alloc(root, arrival_queue->process_mem);
+            MabPtr mem_block = mem_alloc(root, arrival_queue->process_mem);
             // will only proceed if there is enough memory to allocate
             if (mem_block != NULL) {
                 process = deqPcb(&arrival_queue); // dequeue process

@@ -1,8 +1,8 @@
 #include "mab.h"
 
-Mab *container[BLOCK_COUNT];
+MabPtr container[BLOCK_COUNT];
 
-Mab *root, *root_temp, *new_node_left, *new_node_right, *allocate_block;
+MabPtr root, root_temp, new_node_left, new_node_right, allocate_block;
 bool found_node = false;
 bool mem_freed = false;
 
@@ -23,9 +23,9 @@ norm_mem_request(int mem_request) {
     return actual_allocated_mem;
 }
 
-Mab*
+MabPtr
 init_mem_block (int size, int offset_address) {
-    Mab * new_block = malloc(sizeof(Mab));
+    MabPtr  new_block = malloc(sizeof(Mab));
     new_block -> size = size;
     new_block -> offset_address = offset_address;
     new_block -> next = NULL;
@@ -43,7 +43,7 @@ void
 print_tree() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
         printf("Container %d; ", i);
-        Mab *temp = container[i];
+        MabPtr temp = container[i];
         while (temp != NULL) {
             printf("%d ", temp->allocated);
             temp = temp->next;
@@ -53,7 +53,7 @@ print_tree() {
     printf("\n");
 }
 
-Mab* 
+MabPtr 
 init_mem_system()
 {
     root = init_mem_block(MAX_ALLOC, 0);
@@ -89,8 +89,8 @@ search_remove(int level) {
     }
 }
 
-Mab *
-mem_split(Mab *mem_block, int mem_request) {
+MabPtr 
+mem_split(MabPtr mem_block, int mem_request) {
 
     if (mem_block == NULL) {
         return NULL;
@@ -104,8 +104,8 @@ mem_split(Mab *mem_block, int mem_request) {
         mem_block-> allocated == false &&
         found_node == false) 
         {
-            Mab * new_node_left = init_mem_block(mem_block->size/2, mem_block->offset_address);
-            Mab * new_node_right = init_mem_block(mem_block->size/2, mem_block->offset_address + mem_block->size/2);
+            MabPtr  new_node_left = init_mem_block(mem_block->size/2, mem_block->offset_address);
+            MabPtr  new_node_right = init_mem_block(mem_block->size/2, mem_block->offset_address + mem_block->size/2);
 
             #ifndef DEBUG_PRINT
                 printf("left address: %d\n", new_node_left->offset_address);
@@ -195,8 +195,8 @@ mem_split(Mab *mem_block, int mem_request) {
     return allocate_block;
 }
 
-Mab*
-mem_alloc(Mab* root_node, int mem_request) {
+MabPtr
+mem_alloc(MabPtr root_node, int mem_request) {
 
     //normalize memory request
     int allocated_mem = norm_mem_request(mem_request);
@@ -268,8 +268,8 @@ mem_alloc(Mab* root_node, int mem_request) {
 }
 
 // recursively check if node can be merged from leaf to root
-Mab* 
-mem_merge (Mab* mem_block) {
+MabPtr 
+mem_merge (MabPtr mem_block) {
 
     if (mem_block == NULL) {
         return mem_block;
@@ -291,7 +291,7 @@ mem_merge (Mab* mem_block) {
                 // if mem_block is a left child
                 if (mem_block->parent_block->left_child_block == mem_block) {
                     // remove the right sibling
-                    Mab* to_free = mem_block->parent_block->right_child_block;
+                    MabPtr to_free = mem_block->parent_block->right_child_block;
                     to_free->remove = true;
 
                     int right_child_level = to_free->level;
@@ -303,7 +303,7 @@ mem_merge (Mab* mem_block) {
                 // if mem_block is a right child
                 else if (mem_block->parent_block->right_child_block == mem_block) {
                     // remove the left sibling
-                    Mab* to_free = mem_block->parent_block->left_child_block;
+                    MabPtr to_free = mem_block->parent_block->left_child_block;
                     to_free->remove = true;
 
                     int left_child_level = to_free->level;
@@ -372,8 +372,8 @@ mem_merge (Mab* mem_block) {
     return NULL;
 }
 
-Mab*
-mem_free (Mab* mem_block) {
+MabPtr
+mem_free (MabPtr mem_block) {
 
     if (mem_block == NULL) {
         return mem_block;
@@ -405,7 +405,7 @@ mem_free (Mab* mem_block) {
                 if (mem_block->parent_block->left_child_block == mem_block) {
                     
                     // remove right child from free list 
-                    Mab* to_free = mem_block->parent_block->right_child_block;
+                    MabPtr to_free = mem_block->parent_block->right_child_block;
                     to_free->remove = true;
 
                     int right_child_level = to_free->level;
@@ -413,7 +413,7 @@ mem_free (Mab* mem_block) {
 
                 } else if (mem_block->parent_block->right_child_block == mem_block){
                     // remove left child from free list
-                    Mab* to_free = mem_block->parent_block->left_child_block;
+                    MabPtr to_free = mem_block->parent_block->left_child_block;
                     to_free->remove = true;
 
                     int left_child_level = to_free->level;
@@ -454,7 +454,7 @@ mem_free (Mab* mem_block) {
 // int main() {
 //     init_mem_system();
 
-//     Mab *a, *b, *c, *d;
+//     MabPtr a, *b, *c, *d;
 
 //     a = mem_alloc(8);
 //     c = mem_alloc(8);

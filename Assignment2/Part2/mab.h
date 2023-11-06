@@ -45,13 +45,14 @@ typedef struct mab {
     int level;
 } Mab;
 
-Mab* init_mem_block (int size, int offset_address);
+typedef MabPtr MabPtr;
+
+MabPtr init_mem_block (int size, int offset_address);
 void print_tree();
-Mab* init_mem_system();
+MabPtr init_mem_system();
 void search_remove(int level);
-Mab* mem_split(Mab *mem_block, int mem_request);
-Mab* mem_alloc(Mab *root_node, int mem_request);
-Mab* mem_merge (Mab* mem_block);
-Mab* mem_free (Mab* mem_block);
+MabPtr mem_split(MabPtr mem_block, int mem_request);
+MabPtr mem_alloc(MabPtr root_node, int mem_request);
+MabPtr mem_merge (MabPtr mem_block);
+MabPtr mem_free (MabPtr mem_block);
 int norm_mem_request(int mem_request);
-void delete_mem_tree();
